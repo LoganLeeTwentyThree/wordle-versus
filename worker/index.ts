@@ -43,14 +43,13 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
     }
 
     async onPlayerJoin(player: Player): Promise<void> {
-      console.log(this.baseState.activePlayers)
         if (this.getActivePlayers().length === 2) {
 
-            const response = await fetch('https://random-word-api.herokuapp.com/word?length=5&diff=3')
-            const word = await response.json() as Array<string>
-            console.log(word)
+            const response = await fetch('https://random-words-api.kushcreates.com/api?category=wordle&length=5&words=1')
+            const word = await response.json() as [{ word: string }]
+
             this.currentGameState.UpdateState({
-                secrets: { word: word[0] },
+                secrets: { word: word[0].word },
                 activePlayerId: player.id
             })
         }
@@ -61,7 +60,7 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
         this.closeRoom()
     }
 
-    validatePlayerAction(player: Player, action: Action<WordleActions>): Result {
+    async validatePlayerAction(player: Player, action: Action<WordleActions>): Promise<Result> {
       if(this.currentGameState.getField("winnerId") !== "")
       {
         return {success: false, reason: "Game is Over!"}
@@ -72,10 +71,18 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
       }
 
       if (action.type === "GUESS") {
-          if (action.payload.guess.length !== 5) {
-              return { success: false, reason: "Word must be 5 letters!" }
-          }
+        if (action.payload.guess.length !== 5) {
+            return { success: false, reason: "Word must be 5 letters!" }
+        }
+
+        //check if word is real
+        const response = await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + action.payload.guess)
+        if(response.ok == false)
+        {
+            return {success: false, reason: action.payload.guess + " is not a real word!"}
+        } 
       }
+
 
       return { success: true }
     }
@@ -100,12 +107,12 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
     private getCorrectness(word : string) : number[]
     {
         let result : number[] = new Array(5).fill(0)
-
+        
         // 1 == correct == green
         // 2 == letter is in word == yellow
 
         const secret = this.currentGameState.getStateValues().secrets.word
-
+        
         for(let i = 0; i < 5; i++)
         {
             if(secret[i] == word[i])
