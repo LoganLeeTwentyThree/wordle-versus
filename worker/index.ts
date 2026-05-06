@@ -42,14 +42,23 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
         return { success: false, reason: "Room is full!" }
     }
 
-    onPlayerJoin(player: Player): void {
+    async onPlayerJoin(player: Player): Promise<void> {
       console.log(this.baseState.activePlayers)
         if (this.getActivePlayers().length === 2) {
+
+            const response = await fetch('https://random-word-api.herokuapp.com/word?length=5&diff=3')
+            const word = await response.json() as Array<string>
+            console.log(word)
             this.currentGameState.UpdateState({
-                secrets: { word: this.words[Math.floor(Math.random() * this.words.length)] },
+                secrets: { word: word[0] },
                 activePlayerId: player.id
             })
         }
+    }
+
+    onPlayerLeave(player: Player): void {
+        console.log(player.name)
+        this.closeRoom()
     }
 
     validatePlayerAction(player: Player, action: Action<WordleActions>): Result {
@@ -96,12 +105,18 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
         // 2 == letter is in word == yellow
 
         const secret = this.currentGameState.getStateValues().secrets.word
+
         for(let i = 0; i < 5; i++)
         {
-            if(word[i] === secret[i])
+            if(secret[i] == word[i])
             {
                 result[i] = 1
-            }else if(secret.includes(word[i]))
+            }
+        }
+
+        for(let i = 0; i < 5; i++)
+        {
+            if(secret[i].includes(word[i]) && result[i] != 1)
             {
                 result[i] = 2
             }

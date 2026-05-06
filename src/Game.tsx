@@ -46,50 +46,55 @@ function Game(props: {lobby: string}) {
     {
         return (
         guesses.current.map((e : Guess) =>
-            <div style={{ 
-                flexDirection: "row", 
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center"
-            }}> 
+            <div className="wvs-board-row">
                 {[...e.word].map((l, i) => {
-                    const color = e.correctness[i] == 0 ? "grey" : (e.correctness[i] == 1 ? "green" : "yellow")
-                    return <div style={
-                        {
-                            backgroundColor: color,
-                            width: 30,
-                            height: 30,
-                            margin: 2,
-                            color: "black"
-                        }
-                    }
-                    key={e + l + i}>
-                    {l}</div>
+                    const colorClass = e.correctness[i] == 0 ? "t-d" : (e.correctness[i] == 1 ? "t-g" : "t-y")
+                    return <div className={`wvs-tile ${colorClass}`} key={e + l + i}>{l}</div>
                 })}
             </div>
-                
         ))
     }
 
-    return <div>
-        <div>Connected to {props.lobby}</div>
-        {activePlayerId.current !== "" && winnerId.current === "" &&
-        <div>
-            <div>{activePlayerId.current === myId.current ? "Your Turn" : "Opponent's Turn"}</div>
-            
-            {renderBoard()}
-            
-            <input type="text" ref={guessField} placeholder="Guess"></input>
-            <button onClick={() => guess(guessField?.current?.value)}>Guess</button>
-        </div>}
-        {winnerId.current !== "" && 
-        <div>
-            {renderBoard()}
-            <div>You {winnerId.current === myId.current ? "Won!" : "Lost..."}</div>
-            <button onClick={() => window.location.reload()}>Leave</button>
+    return (
+        <div className="wvs-root">
+            <div className="wvs-subtitle">Connected to {props.lobby}</div>
+
+            {activePlayerId.current !== "" && winnerId.current === "" &&
+            <div className="wvs-panel">
+                <div className={`wvs-turn-banner ${activePlayerId.current === myId.current ? "wvs-turn-mine" : "wvs-turn-opponent"}`}>
+                    {activePlayerId.current === myId.current ? "Your Turn" : "Opponent's Turn"}
+                </div>
+
+                <div className="wvs-board">
+                    {renderBoard()}
+                </div>
+
+                <div className="wvs-block">
+                    <input type="text" ref={guessField} placeholder="Enter guess" className="wvs-input" />
+                    <button onClick={() => guess(guessField?.current?.value)} className="wvs-btn wvs-btn-join">
+                        Guess →
+                    </button>
+                </div>
+            </div>}
+
+            {winnerId.current !== "" &&
+            <div className="wvs-panel">
+                <div className={`wvs-result-banner ${winnerId.current === myId.current ? "wvs-result-win" : "wvs-result-lose"}`}>
+                    {winnerId.current === myId.current ? "You Won! 🎉" : "You Lost..."}
+                </div>
+
+                <div className="wvs-board">
+                    {renderBoard()}
+                </div>
+
+                <div className="wvs-block">
+                    <button onClick={() => window.location.reload()} className="wvs-btn wvs-btn-search">
+                        Leave
+                    </button>
+                </div>
+            </div>}
         </div>
-        }
-    </div>
+    )
 }
 
 
