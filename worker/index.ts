@@ -47,7 +47,7 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
 
             const response = await fetch('https://random-words-api.kushcreates.com/api?category=wordle&length=5&words=1')
             const word = await response.json() as [{ word: string }]
-
+            console.log(word[0].word)
             this.currentGameState.UpdateState({
                 secrets: { word: word[0].word },
                 activePlayerId: player.id
@@ -90,7 +90,7 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
     onValidPlayerAction(player: Player, action: Action<WordleActions>): void {
         if (action.type === "GUESS") {
             const word = this.currentGameState.getField("secrets").word
-            const guesses = [...this.currentGameState.getField("guesses"), { word: action.payload.guess, correctness: this.getCorrectness(action.payload.guess) }]
+            const guesses = [...this.currentGameState.getField("guesses"), { word: action.payload.guess.toUpperCase(), correctness: this.getCorrectness(action.payload.guess) }]
 
             if (action.payload.guess === word) {
                 this.currentGameState.UpdateState({ guesses, winnerId: player.id })
@@ -111,11 +111,12 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
         // 1 == correct == green
         // 2 == letter is in word == yellow
 
-        const secret = this.currentGameState.getStateValues().secrets.word
+        const secret = this.currentGameState.getStateValues().secrets.word.toLowerCase()
         
+
         for(let i = 0; i < 5; i++)
         {
-            if(secret[i] == word[i])
+            if(secret[i] == word[i].toLowerCase())
             {
                 result[i] = 1
             }
@@ -123,11 +124,14 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
 
         for(let i = 0; i < 5; i++)
         {
-            if(secret[i].includes(word[i]) && result[i] != 1)
+            if(secret.includes(word[i].toLowerCase()) && result[i] != 1)
             {
+                console.log(secret[i])
                 result[i] = 2
             }
         }
+
+        
 
         return result
     }

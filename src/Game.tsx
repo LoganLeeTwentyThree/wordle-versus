@@ -46,7 +46,7 @@ function Game(props: {lobby: string}) {
     {
         return (
         guesses.current.map((e : Guess) =>
-            <div className="wvs-board-row">
+            <div key={e.word} className="wvs-board-row">
                 {[...e.word].map((l, i) => {
                     const colorClass = e.correctness[i] == 0 ? "t-d" : (e.correctness[i] == 1 ? "t-g" : "t-y")
                     return <div className={`wvs-tile ${colorClass}`} key={e + l + i}>{l}</div>
