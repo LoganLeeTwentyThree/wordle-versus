@@ -1,11 +1,13 @@
 import { useRef } from "react";
-import useWebSocketModule from "react-use-websocket";
+import useWebSocketModule, { ReadyState } from "react-use-websocket";
 
 //react-use-websocket broken as of vite 8 -> https://github.com/robtaussig/react-use-websocket/issues/280#issuecomment-4352423364 
 const { default: useWebSocket = useWebSocketModule } = useWebSocketModule as unknown as {
     default: typeof useWebSocketModule;
 };
 import './App.css'
+import { toast, ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 type Guess = {
   word: string,
@@ -16,6 +18,7 @@ function Game(props: {lobby: string}) {
     const {
         sendJsonMessage,
         lastJsonMessage,
+        readyState
     } = useWebSocket("/websocket?lobby=" + props.lobby)
 
     const guessField = useRef<HTMLInputElement>(null)
@@ -24,7 +27,12 @@ function Game(props: {lobby: string}) {
     const winnerId = useRef<string>("")
     const myId = useRef<string>("")
 
-    console.log(lastJsonMessage)
+    if(readyState == ReadyState.CLOSED)
+    {
+        //opponent left
+        window.location.reload()
+    }
+
     if(lastJsonMessage?.message?.state != undefined)
     {
         const newState = lastJsonMessage.message.state
@@ -33,6 +41,16 @@ function Game(props: {lobby: string}) {
         winnerId.current = newState.winnerId
         myId.current = lastJsonMessage.playerId
     }
+
+    if(lastJsonMessage?.message?.error)
+    {
+        toast.error(lastJsonMessage?.message?.error, {
+            position: "top-right",
+            autoClose: 2000,
+            theme: "dark"
+        });
+    }
+    
 
     function guess(word : string | undefined)
     {
@@ -57,6 +75,7 @@ function Game(props: {lobby: string}) {
 
     return (
         <div className="wvs-root">
+            <ToastContainer position="top-right" autoClose={3000} />
             <div className="wvs-subtitle">Connected to {props.lobby}</div>
 
             {activePlayerId.current !== "" && winnerId.current === "" &&

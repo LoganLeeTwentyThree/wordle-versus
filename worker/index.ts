@@ -126,7 +126,6 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
         {
             if(secret.includes(word[i].toLowerCase()) && result[i] != 1)
             {
-                console.log(secret[i])
                 result[i] = 2
             }
         }
