@@ -5,9 +5,10 @@ import useWebSocketModule, { ReadyState } from "react-use-websocket";
 const { default: useWebSocket = useWebSocketModule } = useWebSocketModule as unknown as {
     default: typeof useWebSocketModule;
 };
-import './App.css'
+import './index.css'
 import { toast, ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
+import Timer from "./Timer";
 
 type Guess = {
   word: string,
@@ -26,6 +27,7 @@ function Game(props: {lobby: string}) {
     const activePlayerId = useRef<string>("")
     const winnerId = useRef<string>("")
     const myId = useRef<string>("")
+    const endTime = useRef<number>(0)
 
     if(readyState == ReadyState.CLOSED)
     {
@@ -40,6 +42,7 @@ function Game(props: {lobby: string}) {
         activePlayerId.current = newState.activePlayerId
         winnerId.current = newState.winnerId
         myId.current = lastJsonMessage.playerId
+        endTime.current = newState.nextTimeMs
     }
 
     if(lastJsonMessage?.message?.error)
@@ -50,7 +53,6 @@ function Game(props: {lobby: string}) {
             theme: "dark"
         });
     }
-    
 
     function guess(word : string | undefined)
     {
@@ -82,6 +84,7 @@ function Game(props: {lobby: string}) {
             <div className="wvs-panel">
                 <div className={`wvs-turn-banner ${activePlayerId.current === myId.current ? "wvs-turn-mine" : "wvs-turn-opponent"}`}>
                     {activePlayerId.current === myId.current ? "Your Turn" : "Opponent's Turn"}
+                    <Timer key={endTime.current} onExpire={() => sendJsonMessage({type: "NOTIFY"})} expiryTimeStamp={new Date(endTime.current)} />
                 </div>
 
                 <div className="wvs-board">

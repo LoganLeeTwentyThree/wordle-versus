@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Game from './Game';
 
-import './App.css'
+import './index.css'
 import Queue from './Queue';
 
 function App() {
