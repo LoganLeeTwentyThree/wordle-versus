@@ -12,7 +12,7 @@ export type State = {
     guesses: Guess[],
     winnerId: string,
     nextTimeMs: number
-    secrets: { word: string }
+    secrets: { word: string, pendingValidation: boolean }
 }
 
 // Define all actions and their payload shapes here.
@@ -29,7 +29,7 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
             activePlayerId: "",
             guesses: [],
             winnerId: "",
-            secrets: { word: "" }
+            secrets: { word: "", pendingValidation: false }
         }
     }
 
@@ -49,20 +49,19 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
             const word = await response.json() as [{ word: string }]
             console.log(word[0].word)
             this.currentGameState.UpdateState({
-                secrets: { word: word[0].word },
+                secrets: { word: word[0].word, pendingValidation: false },
                 activePlayerId: player.id,
                 nextTimeMs: Date.now() + 20 * 1000
             })
         }
     }
 
-    onPlayerLeave(player: Player): void {
-        console.log(player.name)
+    onPlayerLeave(_player: Player): void {
         this.closeRoom()
     }
 
     async validatePlayerAction(player: Player, action: Action<WordleActions>): Promise<Result> {
-        if(action.type === "GUESS")
+        if(action.type === "GUESS" && !this.currentGameState.getField("secrets").pendingValidation)
         {
             if(this.currentGameState.getField("winnerId") !== "")
             {
@@ -78,18 +77,23 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
                 return { success: false, reason: "Out of time!" }
             }
 
-            if (action.type === "GUESS") {
-                if (action.payload.guess.length !== 5) {
-                    return { success: false, reason: "Word must be 5 letters!" }
-                }
+            if (action.payload.guess.length !== 5) {
+                return { success: false, reason: "Word must be 5 letters!" }
+            }
 
-                //check if word is real
-                const response = await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + action.payload.guess)
-                if(response.ok == false)
-                {
-                    return {success: false, reason: action.payload.guess + " is not a real word!"}
-                } 
-            }  
+            //check if word is real
+            this.toggleValidationFlag()
+            const response = await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + action.payload.guess)
+            if(response.ok == false)
+            {
+                this.toggleValidationFlag()
+                return {success: false, reason: action.payload.guess + " is not a real word!"}
+            } 
+            this.toggleValidationFlag()
+            
+        }else if(this.currentGameState.getField("secrets").pendingValidation)
+        {
+            return {success: false, reason: "One at a time"}
         }
 
 
@@ -119,6 +123,11 @@ export class WordleVs extends GameRoom<State, WordleActions, {}, Env>
                 winnerId: opponent?.id ?? ""
             })
         }
+    }
+
+    private toggleValidationFlag()
+    {
+        this.currentGameState.UpdateState( {secrets: {word: this.currentGameState.getField("secrets").word, pendingValidation: !this.currentGameState.getField("secrets").pendingValidation}} )
     }
 
     private getCorrectness(word : string) : number[]

@@ -12,7 +12,7 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "@loganlee23/gameroom": "^1.0.51",
+    "@loganlee23/gameroom": "C:\\Users\\lofty\\Desktop\\Projects\\gameroom",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-timer-hook": "^4.0.5",
